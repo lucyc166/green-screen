@@ -1,0 +1,131 @@
+from tkinter import *
+from photoshop_req import *
+from PIL import ImageTk,Image  
+
+root = Tk()
+
+class EntryPage:
+   def __init__(self, master): # function called automatically
+      #frame = Frame(master)
+      #frame.grid()
+      count = 0
+
+      # create interface
+      image_label = Label(root, text = "Image file name")
+      image_label.grid(row = 0, column = 1)
+
+      image_entry = Entry(root, bd = 5)
+      image_entry.grid(row = 0, column = 3)
+
+      back_label = Label(root, text = "Background file name")
+      back_label.grid(row = 1, column = 1)
+
+      back_entry = Entry(root, bd = 5)
+      back_entry.grid(row = 1, column = 3)
+
+      color_label = Label(root, text = "Color of background")
+      color_label.grid(row = 2, column = 1)
+
+      color_entry = Entry(root, bd = 5)
+      color_entry.grid(row = 2, column = 3)
+
+      self.image_entry = image_entry
+      self.back_entry = back_entry
+      self.color_entry = color_entry
+      #self.frame = frame
+      self.count = count
+
+      # button
+      self.submit = Button(root, text ="Get my new image", command = self.retrieve_entry)
+      self.submit.grid(row = 5, column = 2)
+
+   def create_image(self):
+      create_img_screen(self.img, self.back, self.color, "test.png")
+
+   def print_image(self):
+      image_result = Image.open("test.png")
+      photo = ImageTk.PhotoImage(image_result)
+      image_result = Label(image=photo)
+      image_result.image = photo
+      image_result.grid(row = 1, column = 4, rowspan = 40)
+      self.image_result = image_result
+   
+
+   def scale_img(self, image):
+      photo = ImageTk.PhotoImage(image)
+      y, x =  photo.width(), photo.height()
+      scale = x/200
+      return scale
+
+   # function to print orig image and background at a smaller scale
+   def print_orig(self, org_img):
+      photo = ImageTk.PhotoImage(org_img)
+
+      # rescale image
+      scale = self.scale_img(org_img)
+      y, x =  int(photo.width()/scale), int(photo.height()/scale)
+
+      org_img = org_img.resize((y,x), Image.ANTIALIAS) ## The (250, 250) is (height, width)
+
+      photo = ImageTk.PhotoImage(org_img)
+      org_img = Label(image=photo)
+      org_img.image = photo
+      return org_img
+      
+   
+   def orig_img_back(self):
+      org_img = Image.open(self.img).copy()
+      org_img = self.print_orig(org_img)
+      org_img.grid(row = 7, column = 1, columnspan = 3)
+
+      org_back = Image.open(self.back).copy()
+      org_back = self.print_orig(org_back)
+      org_back.grid(row = 9, column = 1, columnspan = 3)
+
+      self.org_img = org_img
+      self.org_back = org_back
+      
+   def retrieve_entry(self):
+      self.count += 1
+      self.img = self.image_entry.get()
+      self.back = self.back_entry.get()
+      self.color = self.color_entry.get()
+      if self.color == "green":
+         self.color = 1
+      elif self.color == "blue":
+         self.color = 2
+      else:
+         print("ERROR: choose either green or blue")
+
+      if self.img == "" or self.back == "" or self.color == "":
+         print("ERROR: Fill in all entry boxes")
+      
+      else:
+         print("Generating image")
+         if self.count > 1:
+            self.org_img.destroy()
+            self.org_back.destroy()
+            self.image_result.destroy()
+
+         image_label = Label(root, text = "Combined image and background")
+         image_label.grid(row = 0, column = 4)
+         self.create_image()
+
+         image_label = Label(root, text = "Original image")
+         image_label.grid(row = 6, column = 1)
+         self.print_image()
+
+         image_label = Label(root, text = "Original background")
+         image_label.grid(row = 8, column = 1)
+         self.orig_img_back()
+
+
+p = EntryPage(root)
+'''if color == "green":
+   color = 1
+elif color == "blue":
+   color = 2
+else:
+   print("ERROR: choose either green or blue")
+create_img_screen(img, back, color, "test.png")'''
+root.mainloop()
