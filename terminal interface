@@ -1,0 +1,107 @@
+from PIL import Image
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+
+# defining new error
+class DimError(Exception):
+    pass
+
+def jpg_to_png(jpg_file, new_name):
+    img1 = Image.open(jpg_file)
+    img1.save(new_name)
+    return new_name
+
+def choose_images(img, back):
+    # the slice is to remove an unnecessary alpha channel, if present
+    #image = plt.imread("oz_bluescreen.png")[:, :, :3]
+    image = plt.imread(img)[:, :, :3]
+    image_shape = image.shape
+    a, b = image_shape[0], image_shape[1]
+
+    # resize background so it fits the image
+    img1 = cv2.imread(back, -1)
+    img1 = cv2.resize(img1, dsize=(b,a), interpolation=cv2.INTER_NEAREST)
+
+    plt.imsave("new_img.png", img1[...,::-1])
+    background = plt.imread("new_img.png")[:, :, :3]
+
+    # check if image is bigger than background
+    '''background_shape = background.shape
+    y, x = background_shape[0], background_shape[1]
+    if a > y or b > x:
+        raise DimError'''
+
+
+
+    #background = background[0:a, 0:b, :3] 
+    return image, background
+
+# image with only one color channel
+def pure_rgb(image, index):
+    # add only one color channel to a blank image
+    channel = image[:, :, index]
+    empty_img = np.zeros(image.shape)
+    empty_img[:, :, index] = channel
+    return empty_img
+
+    # the process
+    # oz_bluescreen and meadow are a RGB images, so image and background are 3D arrays
+    # and have 3 values at every pixel location
+    '''red = (image[:, :, 0])
+    green = (image[:, :, 1])
+    blue = (image[:, :, 2])'''
+'''
+# create empty image with same shape as that of orig image
+empty_img = np.zeros(image.shape)
+
+#assign the color channel of image to empty image
+pure_red = pure_rgb(image, 0)
+pure_green = pure_rgb(image, 1)
+pure_blue = pure_rgb(image, 2)'''
+
+def choose_screen(color, image, background): # 1 or 2 (b or g)
+        if color != 1 and color != 2:
+            raise ValueError
+        new_img = background 
+        # iterate through each pixel
+        for i in range(len(image)):
+            for j in range(len(image[i])):
+                pixel = image[i][j]
+                '''r = pixel[0]
+                g = pixel[1]
+                b = pixel[2]'''
+
+                # create formula based on if b or g is chosen
+                c = pixel[color] # chosen color
+                a = pixel[0] # red
+                b = pixel[3 - color] # third color
+
+                if c < a + b:
+                    new_img[i][j] = image[i][j]
+        return new_img       
+
+def create_img_screen(img, back, color, save_as):
+    # convert image or background from jpg to png
+    if "jpg" in img:
+        img = jpg_to_png(img, "img.png")
+        print("Image converted!")
+    if "jpg" in back:
+        back = jpg_to_png(back, "back.png")
+        print("Background converted!")
+
+    try:
+        image, background = choose_images(img, back)
+    except DimError:
+        print("ERROR: Image dimensions are larger than the background dimensions. Choose a different background or image and try again.")
+
+    try:
+        new_img = choose_screen(color, image, background)
+        plt.imsave(save_as, new_img)
+        print("DONE!")
+
+    except ValueError:
+        print("ERROR: Choose 1 for a green-screen filter or 2 for blue-screen filter")
+
+
+#create_img_screen("marvel.png", "city.jpg", 1, "photoshop.png")
